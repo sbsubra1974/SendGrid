@@ -74,8 +74,7 @@ public class EventWebhook extends HttpServlet {
 		cursor = docs.iterator();
 		list = new ArrayList<String>();
 		while(cursor.hasNext())
-			list.add(cursor.next().toJson().toString()); 
-		//parse cursor content to json, serialize parsed content to string(for response)
+			list.add(cursor.next().toJson().toString()); //parse cursor content to json, serialize parsed content to string(for response)
 		    
 		 response.setContentType("application/json");
 		 response.setCharacterEncoding("utf-8");
