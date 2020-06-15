@@ -1,2 +1,2 @@
-com\sendgrid\MongoDBDriver.class
 com\sendgrid\EventWebhook.class
+com\sendgrid\MongoDBDriver.class

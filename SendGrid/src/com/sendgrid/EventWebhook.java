@@ -2,6 +2,7 @@ package com.sendgrid;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -20,8 +21,12 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
+import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoDatabase;
+
+import com.mongodb.client.model.Filters;
 
 /**
  * Servlet implementation class EventWebhook
@@ -41,9 +46,45 @@ public class EventWebhook extends HttpServlet {
 	/**
 	 * @see HttpServlet#doGet(HttpServletRequest request, HttpServletResponse response)
 	 */
+    MongoDBDriver db;
+    MongoDatabase mdb;
+    MongoCollection<Document> collection;
+    FindIterable<Document> docs;
+    MongoCursor<Document> cursor;
+    PrintWriter out;
+    List<String> list;
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		// TODO Auto-generated method stub
-		response.getWriter().append("Served at: ").append(request.getContextPath());
+		
+		//retrieve filter criteria from GET request
+		String eventVal = request.getParameter("event");
+		
+		//connect to DB
+		//get collection
+	    db = new MongoDBDriver();		  
+   	    mdb = db.getDBConnection("SendGrid");
+		collection = mdb.getCollection("EventWebhook");
+		
+		//retrieve all documents in the collection based upon filter criteria
+		//create mongodb cursor
+		//setup an arraylist of String type
+		//loop through cursor
+		//parse cursor content to json, serialize parsed content to string(for response)
+		//add as list element
+		docs=collection.find(Filters.eq("event", eventVal));		    
+		cursor = docs.iterator();
+		list = new ArrayList<String>();
+		while(cursor.hasNext())
+			list.add(cursor.next().toJson().toString()); //parse cursor content to json, serialize parsed content to string(for response)
+		    
+		 response.setContentType("application/json");
+		 response.setCharacterEncoding("utf-8");
+		 out = response.getWriter();		 
+		 //send the entire serialized list as response
+		 //Notes about status codes:- : https://www.javamex.com/tutorials/servlets/http_status_code.shtml
+		 	//i. servlet will send 200OK BY DEFAULT-thats why you see this status code appearing on Postman EVEN WHEN YOU DO NOT SET 200OK exclusively
+		 	//ii. you should set the status code before sending any output. This is because the status code always comes before any output in the data returned to the client
+		 response.setStatus(200); 
+		 out.print(list);
 	}
 
 	/**
@@ -51,16 +92,6 @@ public class EventWebhook extends HttpServlet {
 	 */
 	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		System.out.println("inside");
-		// TODO Auto-generated method stub		
-		/*
-		Enumeration<String> parameterNames = request.getParameterNames();
-		int i =0;
-        while (parameterNames.hasMoreElements()) {
-            String paramName = parameterNames.nextElement();
-           System.out.println("EventWebhook parameter"+i+++" "+paramName+":"+request.getParameter(paramName));
-           }
-        */ 	
-		
 		StringBuffer jb = new StringBuffer();
 		JSONObject jsonObject;
 		JSONArray jsonarray;
@@ -69,9 +100,7 @@ public class EventWebhook extends HttpServlet {
 		    BufferedReader reader = request.getReader(); 
 		    while ((line = reader.readLine()) != null) //read POST request body parameters
 		      jb.append(line);	//line by line
-		  } catch (Exception e) { /*report an error*/ }
-
-		  System.out.println("jb: "+jb.toString());
+		  } catch (Exception e) { /*report an error*/ }		  
 		 	  
 		  try {
 		    //jsonObject = new JSONObject(jb.toString()); // https://stleary.github.io/JSON-java/
@@ -232,8 +261,7 @@ public class EventWebhook extends HttpServlet {
 		  MongoDBDriver db = new MongoDBDriver();		  
 		  MongoDatabase mdb = db.getDBConnection("video");		  
 		  MongoCollection<Document> collection = mdb.getCollection("movieDetails");		  
-		  System.out.println("collection.countDocuments(): "+collection.countDocuments());
-		  
+		  System.out.println("collection.countDocuments(): "+collection.countDocuments());		  
 		  //insert document in collection SendGrid.EventWebhook steps:-		  
 		  //first: switch to db SendGrid
 		  //second: get the collection in which to insert [EventWebhook]
@@ -242,9 +270,8 @@ public class EventWebhook extends HttpServlet {
 		  //convert it to document
 		  //fourth: insert document into collection EventWebhook
 		  mdb = db.getDBConnection("SendGrid");
-		  collection = mdb.getCollection("EventWebhook");
-		  
-		  /*insert one document
+		  collection = mdb.getCollection("EventWebhook");		  
+		  /*//insert one document
 		  Document doc = Document.parse( jsonarray.get(0).toString()); 
 		  collection.insertOne(doc);
 		  */		  
@@ -253,8 +280,7 @@ public class EventWebhook extends HttpServlet {
 		  for (int i=0; i<jsonarray.length(); i++) {
 			  doclist.add( Document.parse(jsonarray.get(i).toString()) );
 		  }
-		  collection.insertMany(doclist);
-		 		  
+		  collection.insertMany(doclist);		 		  
   
 		System.out.println("outside");
 		response.setStatus(200);
