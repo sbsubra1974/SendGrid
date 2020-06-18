@@ -95,6 +95,9 @@ public class EventWebhook extends HttpServlet {
 		StringBuffer jb = new StringBuffer();
 		JSONObject jsonObject;
 		JSONArray jsonarray;
+		MongoDBDriver db = new MongoDBDriver();		  
+		MongoDatabase mdb;
+		MongoCollection<Document> collection;
 		  String line = null;
 		  try {
 		    BufferedReader reader = request.getReader(); 
@@ -258,10 +261,9 @@ public class EventWebhook extends HttpServlet {
 		  System.out.println("jsonarray.get(0).toString():"+jsonarray.get(0).toString()); //fetch first document of the JSON array,convert it to string
 		  System.out.println("jsonarray.getJSONObject(0).get(\"event\"):"+jsonarray.getJSONObject(0).get("event")); //fetch 'event' key of first document of JSON array(already converted to string)
 		  
-		  MongoDBDriver db = new MongoDBDriver();		  
-		  MongoDatabase mdb = db.getDBConnection("video");		  
-		  MongoCollection<Document> collection = mdb.getCollection("movieDetails");		  
-		  System.out.println("collection.countDocuments(): "+collection.countDocuments());		  
+		  /*mdb = db.getDBConnection("video");		  
+		  collection = mdb.getCollection("movieDetails");*/		  
+		  		  
 		  //insert document in collection SendGrid.EventWebhook steps:-		  
 		  //first: switch to db SendGrid
 		  //second: get the collection in which to insert [EventWebhook]
@@ -281,7 +283,8 @@ public class EventWebhook extends HttpServlet {
 			  doclist.add( Document.parse(jsonarray.get(i).toString()) );
 		  }
 		  collection.insertMany(doclist);		 		  
-  
+		
+		System.out.println("collection.countDocuments(): "+collection.countDocuments());
 		System.out.println("outside");
 		response.setStatus(200);
 		//doGet(request, response);
