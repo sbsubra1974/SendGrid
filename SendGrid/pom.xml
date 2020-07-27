@@ -64,7 +64,7 @@
         <version>2.2</version>
         <configuration>
           <server>mytomcat7</server>
-          <path>/</path>
+          <path>/SendGrid</path>
         </configuration>
       </plugin>
     </plugins>

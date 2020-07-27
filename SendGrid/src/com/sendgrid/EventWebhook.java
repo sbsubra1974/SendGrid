@@ -3,9 +3,13 @@ package com.sendgrid;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Collections;
+import java.util.Date;
 import java.util.Enumeration;
 import java.util.List;
 
@@ -53,8 +57,48 @@ public class EventWebhook extends HttpServlet {
     MongoCursor<Document> cursor;
     PrintWriter out;
     List<String> list;
+    Date date;
+    DateFormat dateFormat;
+    String strDate;
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+			
+		//loop through all GET query parameters
+		list = new ArrayList<String>();
+		Enumeration<String> parameterNames = request.getParameterNames();
+		while (parameterNames.hasMoreElements()) {
+			//print query parameter names 
+            String paramName = parameterNames.nextElement();
+            list.add(paramName+"\n");
+            //out.write(paramName);
+            //out.write("n");
+            //print query parameter values
+            String[] paramValues = request.getParameterValues(paramName);
+            for (int i = 0; i < paramValues.length; i++) {
+                String paramValue = paramValues[i];
+                list.add(paramValue+"\n");
+                //out.write("t" + paramValue);
+                //out.write("n");
+            }
+		}
 		
+		//include date/time stamp in response for easy debugging
+		date = Calendar.getInstance().getTime();  
+        dateFormat = new SimpleDateFormat("yyyy-mm-dd HH:mm:ss");  
+        strDate = dateFormat.format(date);        
+		
+         System.out.println("list: "+list.toString()+strDate);   
+         response.setContentType("application/json");
+   		 response.setCharacterEncoding("utf-8");
+   		 out = response.getWriter();		 
+   		 //send the entire serialized list as response
+   		 //Notes about status codes:- : https://www.javamex.com/tutorials/servlets/http_status_code.shtml
+   		 	//i. servlet will send 200OK BY DEFAULT-thats why you see this status code appearing on Postman EVEN WHEN YOU DO NOT SET 200OK exclusively
+   		 	//ii. you should set the status code before sending any output. This is because the status code always comes before any output in the data returned to the client
+   		 response.setStatus(200); 
+   		 out.print(list+strDate);
+        
+		
+		/* Retrieve event data from MongoDB's SendGrid DB's EventWebHook collection based on GET request parameter 'event' 
 		//retrieve filter criteria from GET request
 		String eventVal = request.getParameter("event");
 		
@@ -85,6 +129,7 @@ public class EventWebhook extends HttpServlet {
 		 	//ii. you should set the status code before sending any output. This is because the status code always comes before any output in the data returned to the client
 		 response.setStatus(200); 
 		 out.print(list);
+	*/
 	}
 
 	/**
@@ -104,7 +149,9 @@ public class EventWebhook extends HttpServlet {
 		    while ((line = reader.readLine()) != null) //read POST request body parameters
 		      jb.append(line);	//line by line
 		  } catch (Exception e) { /*report an error*/ }		  
-		 	  
+		 
+		  System.out.println("jb :"+jb.toString());
+		  
 		  try {
 		    //jsonObject = new JSONObject(jb.toString()); // https://stleary.github.io/JSON-java/
 		     jsonarray = new JSONArray(jb.toString()); //concert request string to JSON array
@@ -259,7 +306,7 @@ public class EventWebhook extends HttpServlet {
 			]		   
 		   */
 		  System.out.println("jsonarray.get(0).toString():"+jsonarray.get(0).toString()); //fetch first document of the JSON array,convert it to string
-		  System.out.println("jsonarray.getJSONObject(0).get(\"event\"):"+jsonarray.getJSONObject(0).get("event")); //fetch 'event' key of first document of JSON array(already converted to string)
+		  //System.out.println("jsonarray.getJSONObject(0).get(\"event\"):"+jsonarray.getJSONObject(0).get("event")); //fetch 'event' key of first document of JSON array(already converted to string)
 		  
 		  /*mdb = db.getDBConnection("video");		  
 		  collection = mdb.getCollection("movieDetails");*/		  
@@ -285,7 +332,7 @@ public class EventWebhook extends HttpServlet {
 		  collection.insertMany(doclist);		 		  
 		
 		System.out.println("collection.countDocuments(): "+collection.countDocuments());
-		System.out.println("outside");
+		System.out.println("outside");		
 		response.setStatus(200);
 		//doGet(request, response);
 	}
